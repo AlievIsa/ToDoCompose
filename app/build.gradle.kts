@@ -72,13 +72,18 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation(platform("androidx.compose:compose-bom:2024.01.00"))
+
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
-    // Lifecycle + ViewModel & LiveData
+    // Lifecycle
     //implementation("androidx.lifecycle:lifecycle-view-model-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
     implementation("android.arch.lifecycle:common-java8:1.1.1")
 
     // Room
@@ -90,6 +95,7 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0-beta01")
     //implementation("androidx.hilt:hilt-lifecycle-view-model:1.0.0-alpha03")
     //kapt("androidx.hilt:hilt-compiler:1.0.0")
 

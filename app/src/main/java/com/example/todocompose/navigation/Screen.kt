@@ -1,4 +1,4 @@
-package com.example.todocompose.ui.navigation
+package com.example.todocompose.navigation
 
 sealed class Screen(val route: String) {
     data object Tasks : Screen("tasks")

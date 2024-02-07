@@ -19,4 +19,8 @@ class TasksViewModel @Inject constructor(
     fun onTaskSwipedToDelete(task: Task) = viewModelScope.launch {
         taskDao.delete(task)
     }
+
+    fun changeCompletedState(task: Task) = viewModelScope.launch {
+        taskDao.upsert(task.copy(completed = !task.completed))
+    }
 }

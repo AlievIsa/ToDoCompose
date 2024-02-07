@@ -15,13 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.todocompose.R
 import com.example.todocompose.data.Task
 
 @Composable
-fun TaskItem(task: Task) {
+fun TaskItem(
+    task: Task,
+    tasksViewModel: TasksViewModel = hiltViewModel()
+) {
     val checked by remember {
         mutableStateOf(false)
     }
@@ -34,6 +39,7 @@ fun TaskItem(task: Task) {
         Checkbox(
             checked = task.completed,
             onCheckedChange = {
+                tasksViewModel.changeCompletedState(task)
 
             })
         Text(
@@ -42,6 +48,7 @@ fun TaskItem(task: Task) {
                 .padding(end = 8.dp)
                 .weight(1f),
             color = Color.Black,
+            textDecoration = if (task.completed) TextDecoration.LineThrough else TextDecoration.None,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis)
         if (task.important) {

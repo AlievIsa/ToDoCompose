@@ -18,14 +18,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.todocompose.R
 import com.example.todocompose.data.Task
+import kotlinx.coroutines.Job
 
 @Composable
 fun TaskItem(
     task: Task,
-    tasksViewModel: TasksViewModel = hiltViewModel()
+    onItemChecked: (task: Task) -> Job
 ) {
     val checked by remember {
         mutableStateOf(false)
@@ -39,8 +39,7 @@ fun TaskItem(
         Checkbox(
             checked = task.completed,
             onCheckedChange = {
-                tasksViewModel.changeCompletedState(task)
-
+                onItemChecked(task)
             })
         Text(
             text = task.name,

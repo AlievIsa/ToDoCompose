@@ -145,7 +145,7 @@ fun TasksScreen(
                             navController.navigate("${Screen.AddEditTask.route}/${item.id}")
                         }
                         ) {
-                            TaskItem(task = item)
+                            TaskItem(task = item) { tasksViewModel.changeCompletedState(item) }
                         }
                     }
                 )

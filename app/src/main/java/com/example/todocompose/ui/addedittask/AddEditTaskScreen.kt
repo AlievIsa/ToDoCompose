@@ -1,5 +1,6 @@
 package com.example.todocompose.ui.addedittask
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -114,7 +115,9 @@ fun AddEditTaskScreen(
                 )
             )
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().clickable {
+                    addEditViewModel.taskImportance = !addEditViewModel.taskImportance
+                },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(

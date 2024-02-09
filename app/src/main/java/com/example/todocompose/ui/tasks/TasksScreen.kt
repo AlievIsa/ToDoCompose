@@ -9,12 +9,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.DismissValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,11 +22,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SwipeToDismiss
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -132,41 +128,13 @@ fun TasksScreen(
         LazyColumn(
             modifier = Modifier.padding(innerPadding)
         ) {
-            items(tasks) { item ->
-                val state = rememberDismissState(
-                    confirmValueChange = {
-                        if (it == DismissValue.DismissedToStart) {
-                            tasksViewModel.onTaskSwipedToDelete(item)
-                            true
-                        } else {
-                            false
-                        }
-
-                    }
-                )
-                SwipeToDismiss(
-                    state = state,
-                    background = {
-                        Box (modifier = Modifier.fillMaxSize()){
-                            if (state.dismissDirection == DismissDirection.EndToStart) {
-                                Icon(
-                                    imageVector = Icons.Filled.Delete,
-                                    contentDescription = "Delete",
-                                    modifier = Modifier
-                                        .align(Alignment.CenterEnd)
-                                        .padding(end = 16.dp)
-                                )
-                            }
-                        }
-                    }, dismissContent = {
-                        Box (modifier = Modifier.clickable {
-                            navController.navigate("${Screen.AddEditTask.route}/${item.id}")
-                        }
-                        ) {
-                            TaskItem(task = item) { tasksViewModel.changeCompletedState(item) }
-                        }
-                    }
-                )
+            items(items = tasks, key = { item -> item.hashCode() } ) { item ->
+                Box (modifier = Modifier.clickable {
+                    navController.navigate("${Screen.AddEditTask.route}/${item.id}")
+                }
+                ) {
+                    TaskItem(task = item, tasksViewModel::onTaskSwipedToDelete, tasksViewModel::changeCompletedState)
+                }
             }
         }
     }
@@ -175,6 +143,20 @@ fun TasksScreen(
             when(event) {
                 is TasksViewModel.TasksEvent.ShowTaskSavedConfirmationMessage -> {
                     snackbarHostState.showSnackbar(message = event.msg, duration = SnackbarDuration.Short)
+                }
+                is TasksViewModel.TasksEvent.ShowUndoDeleteTaskMessage -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Task deleted",
+                        actionLabel = "UNDO",
+                        duration = SnackbarDuration.Short)
+                    when(result) {
+                        SnackbarResult.ActionPerformed -> {
+                            tasksViewModel.onUndoDeleteClick(event.task)
+                        }
+                        SnackbarResult.Dismissed -> {
+
+                        }
+                    }
                 }
             }
         }

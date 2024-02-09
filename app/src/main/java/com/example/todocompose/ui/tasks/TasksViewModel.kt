@@ -21,17 +21,21 @@ class TasksViewModel @Inject constructor(
 ) : ViewModel() {
 
     val tasks = taskDao.getTasks().asLiveData()
-    val addEditResult = state.getLiveData<Int?>("add_edit_result")
 
     private val taskEventChannel = Channel<TasksEvent>()
     val tasksEvent = taskEventChannel.receiveAsFlow()
 
     fun onTaskSwipedToDelete(task: Task) = viewModelScope.launch {
         taskDao.delete(task)
+        taskEventChannel.send(TasksEvent.ShowUndoDeleteTaskMessage(task))
     }
 
     fun changeCompletedState(task: Task) = viewModelScope.launch {
         taskDao.upsert(task.copy(completed = !task.completed))
+    }
+
+    fun onUndoDeleteClick(task: Task) = viewModelScope.launch {
+        taskDao.upsert(task)
     }
 
     fun onAddEditResult(addEditResult: Int) {
@@ -48,5 +52,7 @@ class TasksViewModel @Inject constructor(
     sealed class TasksEvent {
 
         data class ShowTaskSavedConfirmationMessage(val msg: String): TasksEvent()
+
+        data class ShowUndoDeleteTaskMessage(val task: Task) : TasksEvent()
     }
 }

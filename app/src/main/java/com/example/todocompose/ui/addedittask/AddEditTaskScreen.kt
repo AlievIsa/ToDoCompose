@@ -15,12 +15,16 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -37,6 +41,7 @@ fun AddEditTaskScreen(
     navController: NavController,
     addEditViewModel: AddEditViewModel = hiltViewModel()
     ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -58,11 +63,28 @@ fun AddEditTaskScreen(
                 }
             )
         },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+            LaunchedEffect(Unit) {
+                addEditViewModel.addEditTaskEvent.collect { event ->
+                    when(event) {
+                        is AddEditViewModel.AddEditTaskEvent.ShowInvalidInputMessage -> {
+                            snackbarHostState.showSnackbar(event.msg)
+                        }
+                        is AddEditViewModel.AddEditTaskEvent.NavigateBackWithResult -> {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("add_edit_result", event.result)
+                            navController.popBackStack()
+                        }
+                    }
+                }
+            }
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
                     addEditViewModel.onSaveClick()
-                    navController.popBackStack()
                 }
             ) {
                 Icon(imageVector = Icons.Filled.Check, contentDescription = "Add/edit task")
@@ -104,7 +126,7 @@ fun AddEditTaskScreen(
                 Text(text = "Important task")
             }
             Text(
-                text = if (addEditViewModel.taskName.isBlank()) ""
+                text = if (addEditViewModel.topBarTitle == "Add task") ""
                 else "Created: ${addEditViewModel.createdDateFormatted}")
         }
     }

@@ -9,10 +9,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.todocompose.data.Task
 import com.example.todocompose.data.TaskDao
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+const val ADD_TASK_RESULT_OK = 1
+const val EDIT_TASK_RESULT_OK = 2
 
 @HiltViewModel
 class AddEditViewModel @Inject constructor(
@@ -21,8 +25,7 @@ class AddEditViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val taskId: Int = checkNotNull(state["taskId"])
-    private val _task = MutableStateFlow<Task?>(null)
-    private val task: StateFlow<Task?> = _task
+    private val task = MutableStateFlow<Task?>(null)
     var taskName by mutableStateOf("")
     var taskImportance by mutableStateOf(false)
     var createdDateFormatted by mutableStateOf("")
@@ -31,19 +34,23 @@ class AddEditViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             if (taskId != -1) {
-                taskDao.getTaskById(taskId).collect { task ->
-                    _task.value = task
-                    taskName = task.name
-                    taskImportance = task.important
-                    createdDateFormatted = task.createdDateFormatted
+                taskDao.getTaskById(taskId).collect {
+                    task.value = it
+                    taskName = it.name
+                    taskImportance = it.important
+                    createdDateFormatted = it.createdDateFormatted
                     topBarTitle = "Edit task"
                 }
             }
         }
     }
 
+    private val addEditTaskChannel = Channel<AddEditTaskEvent>()
+    val addEditTaskEvent = addEditTaskChannel.receiveAsFlow()
+
     fun onSaveClick() {
         if (taskName.isBlank()) {
+            showInvalidInputMessage("Name cannot be empty")
             return
         }
         if (taskId != -1) {
@@ -57,9 +64,20 @@ class AddEditViewModel @Inject constructor(
 
     private fun createTask(task: Task) = viewModelScope.launch {
         taskDao.upsert(task)
+        addEditTaskChannel.send(AddEditTaskEvent.NavigateBackWithResult(ADD_TASK_RESULT_OK))
     }
 
     private fun updateTask(task: Task) = viewModelScope.launch {
         taskDao.upsert(task)
+        addEditTaskChannel.send(AddEditTaskEvent.NavigateBackWithResult(EDIT_TASK_RESULT_OK))
+    }
+
+    private fun showInvalidInputMessage(msg: String) = viewModelScope.launch {
+        addEditTaskChannel.send(AddEditTaskEvent.ShowInvalidInputMessage(msg))
+    }
+
+    sealed class AddEditTaskEvent {
+        data class ShowInvalidInputMessage(val msg: String): AddEditTaskEvent()
+        data class NavigateBackWithResult(val result: Int): AddEditTaskEvent()
     }
 }

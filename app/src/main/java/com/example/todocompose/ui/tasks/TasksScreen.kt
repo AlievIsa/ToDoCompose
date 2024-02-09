@@ -22,12 +22,16 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +56,14 @@ fun TasksScreen(
     navController: NavController,
     tasksViewModel: TasksViewModel = hiltViewModel()
 ) {
+    navController.currentBackStackEntry
+        ?.savedStateHandle?.apply {
+            get<Int?>("add_edit_result")?.let {
+                tasksViewModel.onAddEditResult(it)
+            }
+            remove<Int?>("add_edit_result")
+        }
+
     var optionsMenuExpanded by remember {
         mutableStateOf(false)
     }
@@ -61,6 +73,9 @@ fun TasksScreen(
     val tasks by tasksViewModel.tasks.observeAsState(emptyList())
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -102,6 +117,9 @@ fun TasksScreen(
                 },
                 scrollBehavior = scrollBehavior
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -149,6 +167,15 @@ fun TasksScreen(
                         }
                     }
                 )
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        tasksViewModel.tasksEvent.collect { event ->
+            when(event) {
+                is TasksViewModel.TasksEvent.ShowTaskSavedConfirmationMessage -> {
+                    snackbarHostState.showSnackbar(message = event.msg, duration = SnackbarDuration.Short)
+                }
             }
         }
     }

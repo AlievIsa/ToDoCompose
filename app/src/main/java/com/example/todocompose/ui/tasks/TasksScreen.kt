@@ -45,6 +45,7 @@ import androidx.navigation.NavController
 import com.example.todocompose.R
 import com.example.todocompose.navigation.Screen
 import com.example.todocompose.ui.theme.Grey
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +107,7 @@ fun TasksScreen(
                             imageVector = Icons.Filled.MoreVert,
                             contentDescription = "Options"
                         )
-                        DropDownOptionsMenu(expanded = optionsMenuExpanded) {
+                        DropDownOptionsMenu(expanded = optionsMenuExpanded, tasksViewModel) {
                             optionsMenuExpanded = false
                         }
                     }
@@ -164,7 +165,18 @@ fun TasksScreen(
 }
 
 @Composable
-fun DropDownOptionsMenu(expanded: Boolean, onDismissRequest: () -> Unit) {
+fun DropDownOptionsMenu(
+    expanded: Boolean,
+    tasksViewModel: TasksViewModel,
+    onDismissRequest: () -> Unit) {
+    var hideCompletedState by remember {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(Unit) {
+        hideCompletedState = tasksViewModel.preferencesFlow
+            .first().hideCompleted
+    }
+
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
@@ -176,10 +188,18 @@ fun DropDownOptionsMenu(expanded: Boolean, onDismissRequest: () -> Unit) {
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "Hide completed")
-                    Checkbox(checked = false, onCheckedChange = {})
+                    Checkbox(
+                        checked = hideCompletedState,
+                        onCheckedChange = {
+                            hideCompletedState = it
+                            tasksViewModel.onHideCompletedClick(it)
+                        })
                 }
             },
-            onClick = { /*TODO*/ })
+            onClick = {
+                hideCompletedState = !hideCompletedState
+                tasksViewModel.onHideCompletedClick(hideCompletedState)
+            })
         DropdownMenuItem(
             text = { Text(text = "Delete all completed") },
             onClick = { /*TODO*/ })

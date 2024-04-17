@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
-    @Query("SELECT * FROM task_table")
-    fun getTasks(): Flow<List<Task>>
+    @Query("SELECT * FROM task_table WHERE (completed != :hideCompleted OR completed = 0)")
+    fun getTasks(hideCompleted: Boolean): Flow<List<Task>>
 
     @Upsert
     suspend fun upsert(task: Task)
